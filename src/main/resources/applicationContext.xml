@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:jaxws="http://cxf.apache.org/jaxws"
+	xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xsi:schemaLocation="http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://cxf.apache.org/jaxws	http://cxf.apache.org/schemas/jaxws.xsd
+		http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd">
+
+	<context:property-placeholder location="classpath:dbConfig.properties" />
+	
+	<bean id="dataSource" class="com.wnn.myutils.MyRoatingDatasource">
+		<property name="targetDataSources">
+			<map key-type="java.lang.String">
+				<entry key="tester" value-ref="dataSource1"></entry>
+				<entry key="user" value-ref="dataSource2"></entry>
+			</map>
+		</property>
+	</bean>
+	<bean id="dataSource1" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${driverClassName}" />
+		<property name="url" value="${url2}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+	</bean>
+	<bean id="dataSource2" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${driverClassName}" />
+		<property name="url" value="${url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+	</bean>
+	
+	<bean id="sqlSessionFactoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="configLocation" value="classpath:mybatis-config.xml" />
+		 <property name="mapperLocations" value="classpath:mapper/*_Mapper.xml"></property> 
+	</bean>
+	
+	<mybatis-spring:scan base-package="com.wnn.mydao"/>
+	<bean id="mywspasswordcallbackfunction" class="com.wnn.myutils.MyWSPasswordCallBackFunction"></bean>
+	<jaxws:endpoint address="/user" implementorClass="com.wnn.myservice.UserServiceInf">
+		<!-- <jaxws:inInterceptors >
+			<bean class="org.apache.cxf.ws.security.wss4j.WSS4JInInterceptor">
+				<constructor-arg>
+					<map>
+						拦截器校验方式
+						<entry key="action" value="UsernameToken"/>
+						密码类型：加密PasswordDigest 或  明文PasswordText
+						<entry key="passwordType" value="PasswordText"/>
+						回调函数
+						<entry key="passwordCallbackRef" value-ref="mywspasswordcallbackfunction"/>
+					</map>
+				</constructor-arg>
+			</bean>
+		</jaxws:inInterceptors> -->
+		<jaxws:implementor>
+			<bean class="com.wnn.myservice.UserServiceImpl"></bean>
+		</jaxws:implementor>
+	</jaxws:endpoint>
+	
+	
+</beans>
